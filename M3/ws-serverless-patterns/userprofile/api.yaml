@@ -1,3 +1,4 @@
+
 ---
 openapi: 3.0.1
 info:
@@ -7,7 +8,7 @@ paths:
   /address:
     get:
       security:
-        - CognitoAuthorizer: []
+      - CognitoAuthorizer: []
       x-amazon-apigateway-integration:
         httpMethod: "POST"
         uri: 
@@ -168,6 +169,124 @@ paths:
                   ]
                 }
         passthroughBehavior: "when_no_templates"
+        type: "aws"
+
+  /favorite:
+    get:
+      security:
+      - CognitoAuthorizer: []
+      x-amazon-apigateway-integration:
+        httpMethod: "POST"
+        uri: 
+          Fn::Sub: 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ListUserFavoritesFunction.Arn}/invocations'
+        passthroughBehavior: "when_no_match"
+        type: "aws_proxy"
+    post:
+      parameters:
+      - name: "Content-Type"
+        in: "header"
+        schema:
+          type: "string"
+      - name: "X-Amz-Target"
+        in: "header"
+        schema:
+          type: "string"
+      responses:
+        "200":
+          description: "200 response"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Empty"
+      security:
+      - CognitoAuthorizer: []
+      x-amazon-apigateway-integration:
+        credentials: 
+          Fn::Sub: '${APIGatewayQueueCommandRole.Arn}'
+        httpMethod: "POST"
+        uri: 
+          Fn::Sub: 
+            "arn:aws:apigateway:${AWS::Region}:sqs:path/${AWS::AccountId}/${FavoriteRestaurantsQueue.QueueName}"
+        responses:
+          default:
+            statusCode: "200"
+            responseTemplates:
+              application/json: "{}"
+        requestParameters:
+          integration.request.header.Content-Type: "'application/x-www-form-urlencoded'"
+        requestTemplates:
+          application/json:
+            Fn::Join: [ 
+              "&", [ 
+                "#set($inputRoot = $input.path('$'))Action=SendMessage",
+                "MessageBody=$inputRoot.get('restaurantId')",
+                "MessageAttributes.1.Name=CommandName",
+                "MessageAttributes.1.Value.StringValue=AddFavorite",
+                "MessageAttributes.1.Value.DataType=String",
+                "MessageAttributes.2.Name=UserId",
+                "MessageAttributes.2.Value.StringValue=$context.authorizer.claims.sub",
+                "MessageAttributes.2.Value.DataType=String",
+                "Version=2012-11-05"
+              ] 
+            ]
+        passthroughBehavior: "never"
+        type: "aws"
+
+  /favorite/{restaurantId}:
+    delete:
+      parameters:
+      - name: "Content-Type"
+        in: "header"
+        schema:
+          type: "string"
+      - name: "X-Amz-Target"
+        in: "header"
+        schema:
+          type: "string"
+      - name: "restaurantId"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+      responses:
+        "200":
+          description: "200 response"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Empty"
+      security:
+      - CognitoAuthorizer: []
+      x-amazon-apigateway-integration:
+        credentials:
+          Fn::Sub: "${APIGatewayQueueCommandRole.Arn}"
+        httpMethod: "POST"
+        uri: 
+          Fn::Sub:
+            "arn:aws:apigateway:${AWS::Region}:sqs:path/${AWS::AccountId}/${FavoriteRestaurantsQueue.QueueName}"
+        responses:
+          default:
+            statusCode: "200"
+            responseTemplates:
+              application/json: "{}"
+        requestParameters:
+          integration.request.header.Content-Type: "'application/x-www-form-urlencoded'"
+        requestTemplates:
+          application/json: 
+            Fn::Join: [ 
+              "&", [ 
+                "Action=SendMessage",
+                "MessageBody=$input.params().get('path').get('restaurantId')",
+                "MessageAttributes.1.Name=CommandName",
+                "MessageAttributes.1.Value.StringValue=DeleteFavorite",
+                "MessageAttributes.1.Value.DataType=String",
+                "MessageAttributes.2.Name=UserId",
+                "MessageAttributes.2.Value.StringValue=$context.authorizer.claims.sub",
+                "MessageAttributes.2.Value.DataType=String",
+                "Version=2012-11-05"
+              ] 
+            ]
+        passthroughBehavior: "never"
         type: "aws"
 
 components:
