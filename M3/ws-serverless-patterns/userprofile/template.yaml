@@ -147,6 +147,7 @@ Resources:
     Type: AWS::Serverless::Api
     DependsOn:
     - ApiGatewayEventBridgeRole
+    - APIGatewayQueueCommandRole
 
     Properties:
       StageName: !Ref Stage
@@ -189,6 +190,110 @@ Resources:
       Principal: "apigateway.amazonaws.com"
       SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ProfileApiGateway}/*/GET/address'
 
+  FavoriteRestaurantsQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub "FavoriteRestaurants-${AWS::StackName}"
+  
+  FavoriteRestaurantsQueuePolicySQS:
+    Properties:
+      PolicyDocument:
+        Statement:
+          - Action: SQS:*
+            Effect: Allow
+            Principal:
+              AWS: !Ref 'AWS::AccountId'
+            Resource: !GetAtt FavoriteRestaurantsQueue.Arn
+          - Action: SQS:SendMessage
+            Effect: Allow
+            Principal:
+              AWS: !GetAtt APIGatewayQueueCommandRole.Arn
+            Resource: !GetAtt FavoriteRestaurantsQueue.Arn
+        Version: '2012-10-17'
+      Queues:
+        - !Ref FavoriteRestaurantsQueue
+    Type: AWS::SQS::QueuePolicy
+  
+  APIGatewayQueueCommandRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action:
+              - sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service:
+                - apigateway.amazonaws.com
+        Version: '2012-10-17'
+      Path: /
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs
+      Policies:
+        - PolicyDocument:
+            Statement:
+              - Action: sqs:SendMessage
+                Effect: Allow
+                Resource: !GetAtt FavoriteRestaurantsQueue.Arn
+            Version: '2012-10-17'
+          PolicyName: PolicySQS
+
+  ListUserFavoritesFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/api/favorites
+      Handler: list_user_favorites.lambda_handler
+      Runtime: python3.9
+      Policies:
+        DynamoDBReadPolicy:
+          TableName: !Ref FavoritesTable
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref FavoritesTable
+          POWERTOOLS_SERVICE_NAME: serverless-workshop
+
+  ListUserFavoritesPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: "lambda:InvokeFunction"
+      FunctionName: !Ref ListUserFavoritesFunction
+      Principal: "apigateway.amazonaws.com"
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ProfileApiGateway}/*/GET/favorite'
+  
+  FavoritesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+        - AttributeName: "user_id"
+          AttributeType: "S"
+        - AttributeName: "restaurant_id"
+          AttributeType: "S"
+      KeySchema:
+        - AttributeName: "user_id"
+          KeyType: "HASH"
+        - AttributeName: "restaurant_id"
+          KeyType: "RANGE"
+      BillingMode: PAY_PER_REQUEST
+  
+  ProcessFavoriteRestaurantsQueueFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/api/favorites
+      Handler: process_favorites_queue.lambda_handler
+      Runtime: python3.9
+      Policies:
+        DynamoDBCrudPolicy:
+          TableName: "*"
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref FavoritesTable
+          POWERTOOLS_SERVICE_NAME: serverless-workshop
+      Events:
+        Trigger:
+          Type: SQS
+          Properties:
+            Queue: !GetAtt FavoriteRestaurantsQueue.Arn
+
 Outputs:
   AddressBus:
       Description: "Address Event Bus"
@@ -199,3 +304,9 @@ Outputs:
   ProfileApiEndpoint:
     Description: "API Gateway endpoint URL"
     Value: !Sub "https://${ProfileApiGateway}.execute-api.${AWS::Region}.amazonaws.com/${Stage}/"
+  FavoriteSQSUrl:
+    Description: "URL of the Favorite SQS Queue"
+    Value: !Ref FavoriteRestaurantsQueue
+  FavoriteTable:
+    Description: "DynamoDB User Favorites Table"
+    Value: !Ref FavoritesTable
