@@ -204,8 +204,8 @@ def test_cancel_order_in_wrong_status(global_config, orders_endpoint, user_token
   assert response.status_code == 400
 
 def test_create_order_idempotency(global_config, orders_endpoint, user_token):
-
   print("\n\n=========== test_create_order_idempotency")
+
 
   order_details = {
       "restaurantId": 200,
