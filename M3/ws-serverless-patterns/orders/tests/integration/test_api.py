@@ -58,7 +58,9 @@ def test_add_new_order(global_config, orders_endpoint, user_token):
   print("\n========== test_add_new_order\n")
 
   print("global_config = \n" + json.dumps(global_config, indent=4))
-  print(f"orders_endpoint = {orders_endpoint}")
+  print("\n")
+  print("orders_endpoint = \n" + json.dumps(orders_endpoint, indent=4))
+  print("\n")
   print(f"user_token = {user_token}")
 
   print("\n======================================\n")

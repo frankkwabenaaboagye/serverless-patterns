@@ -72,7 +72,7 @@ def create_cognito_accounts():
     result["user1UserAccessToken"] = idp_response["AuthenticationResult"]["AccessToken"]
     result["user1UserRefreshToken"] = idp_response["AuthenticationResult"]["RefreshToken"]
 
-    print(f"result = {result}")
+    print("result = \n" + json.dumps(result, indent=4))
 
     print("\n================================\n")
 
