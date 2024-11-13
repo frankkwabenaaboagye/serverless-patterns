@@ -55,6 +55,7 @@ def test_add_user_address(global_config):
 
 def test_update_user_address(global_config):
     print("============ \n test_update_user_address\n")
+    print("global_config = \n" + json.dumps(global_config, indent=4))
     
     print(f"ID token: {global_config['user1UserIdToken']}")
     print(f"Endpoint: {global_config['ProfileApiEndpoint']}")

@@ -12,6 +12,8 @@ user2_new_favorite = {"restaurantId": str(uuid.uuid4())}
 
 def test_access_to_the_favorites_without_authentication(global_config):
     print("\n==========test_access_to_the_favorites_without_authentication")
+    print("global_config = \n" + json.dumps(global_config, indent=4))
+    print("\n")
     response = requests.get(global_config["ProfileApiEndpoint"] + '/favorite')
     assert response.status_code == 401  
 

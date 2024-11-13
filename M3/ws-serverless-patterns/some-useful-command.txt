@@ -23,5 +23,19 @@ export USERPROFILE_STACK_NAME=ws-serverless-patterns-userprofile
 aws cloudformation describe-stacks --stack-name $USERS_STACK_NAME --query "Stacks[0].Outputs"
 aws cloudformation describe-stacks --stack-name $USERPROFILE_STACK_NAME --query "Stacks[0].Outputs"
 
-Connect the API
+Integration tests - Favorites Service
 
+=== M5
+
+ws-serverless-patterns-orders-OrdersTable-BVRNV8SURQAR
+
+us-east-1_LATPoV9Aq
+
+
+export ORDER_STATUS_STACK_NAME=ws-serverless-patterns-polling
+export ORDERS_STACK_NAME=ws-serverless-patterns-orders
+
+aws cloudformation describe-stacks --stack-name $ORDERS_STACK_NAME --query "Stacks[0].Outputs"
+aws cloudformation describe-stacks --stack-name $ORDER_STATUS_STACK_NAME --query "Stacks[0].Outputs"
+
+export CLIENT_ID=1ik5fe6udgf3e39sqm0pmp42o1
