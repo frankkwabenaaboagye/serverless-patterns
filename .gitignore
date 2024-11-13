@@ -1,0 +1,51 @@
+# Python specific files and folders
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pylint.d/
+*.log
+
+# Virtual environment
+venv/
+env/
+ENV/
+.venv/
+.ENV/
+
+# VS Code settings
+.vscode/
+.vscode/settings.json
+.vscode/launch.json
+.vscode/tasks.json
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# AWS SAM build artifacts and cache
+.aws-sam/
+build/
+dist/
+*.aws-sam.yaml
+
+# MacOS specific files
+.DS_Store
+
+# Bash specific files
+.bash_history
+.bash_logout
+.bash_profile
+.bashrc
+.history
+
+# Other temporary files
+*.swp
+*.swo
+*.bak
+*.tmp
+*.out
+*~
+
+# Ignoring any temporary or system-specific files
+Thumbs.db
+desktop.ini
