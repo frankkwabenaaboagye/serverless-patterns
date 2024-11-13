@@ -43,7 +43,83 @@ Resources:
     Type: AWS::Events::EventBus
     Properties:
       Name: !Sub "Address-${AWS::StackName}"
+
+  AddUserAddressFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/api/address
+      Handler: add_user_address.lambda_handler
+      Runtime: python3.9
+      Tracing: Active
+      Policies:
+        DynamoDBCrudPolicy:
+          TableName: !Ref UserAddressesTable
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref UserAddressesTable
+      Events:
+        Trigger:
+          Type: EventBridgeRule
+          Properties:
+            EventBusName: !Ref AddressBus
+            Pattern:
+              source: 
+                - customer-profile
+              detail-type:
+                - address.added
+
+  EditUserAddressFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/api/address
+      Handler: edit_user_address.lambda_handler
+      Runtime: python3.9
+      Tracing: Active
+      Policies:
+        DynamoDBCrudPolicy:
+          TableName: !Ref UserAddressesTable
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref UserAddressesTable
+          POWERTOOLS_SERVICE_NAME: serverless-workshop
+      Events:
+        Trigger:
+          Type: EventBridgeRule
+          Properties:
+            EventBusName: !Ref AddressBus
+            Pattern:
+              source:
+                - customer-profile
+              detail-type:
+                - address.updated
   
+  DeleteUserAddressFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/api/address
+      Handler: delete_user_address.lambda_handler
+      Runtime: python3.9
+      Tracing: Active
+      Policies:
+        DynamoDBCrudPolicy:
+          TableName: !Ref UserAddressesTable
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref UserAddressesTable
+          POWERTOOLS_SERVICE_NAME: serverless-workshop
+      Events:
+        Trigger:
+          Type: EventBridgeRule
+          Properties:
+            EventBusName: !Ref AddressBus
+            Pattern:
+              source:
+                - customer-profile
+              detail-type:
+                - address.deleted
+
+
+
 Outputs:
   AddressBus:
       Description: "Address Event Bus"
