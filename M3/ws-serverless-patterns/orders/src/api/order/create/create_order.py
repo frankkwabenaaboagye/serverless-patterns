@@ -8,9 +8,11 @@ from aws_lambda_powertools.utilities.typing import LambdaContext
 from aws_lambda_powertools.utilities.idempotency import (
     IdempotencyConfig, DynamoDBPersistenceLayer, idempotent_function
 )
-from aws_lambda_powertools import Logger
+from aws_lambda_powertools import Logger, Metrics
+from aws_lambda_powertools.metrics import MetricUnit
 
 logger = Logger()
+metrics = Metrics()
 
 orders_table = os.getenv('TABLE_NAME')
 idempotency_table = os.getenv('IDEMPOTENCY_TABLE_NAME')
@@ -54,9 +56,14 @@ def add_order(event: dict):
     detail['status'] = 'PLACED'
     detail['orderTime'] = order_time
 
+    logger.info(f"new Order with ID {order_id} saved")
+    metrics.add_metric(name="SuccessfulOrder", unit=MetricUnit.Count, value=1)      #SuccessfulOrder
+    metrics.add_metric(name="OrderTotal", unit=MetricUnit.Count, value=total_amount) #OrderTotal
+
     return detail
 
 @logger.inject_lambda_context
+@metrics.log_metrics  # Ensure metrics are flushed after request completion or failure
 def lambda_handler(event, context: LambdaContext):
     idempotency_config.register_lambda_context(context)
     """Handles the lambda method invocation"""
