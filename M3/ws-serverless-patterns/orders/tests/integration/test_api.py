@@ -45,17 +45,18 @@ def user_token(global_config):
 
 
 def test_access_orders_without_authentication(orders_endpoint):
-  print("\n========== test_access_orders_without_authentication\n")
+  print("\n\n========== test_access_orders_without_authentication\n")
 
   print(f"orders_endpoint = {orders_endpoint}")
 
   print("\n======================================\n")
   response = requests.post(orders_endpoint)
   assert response.status_code == 401
+  print("*****************************\n\n")
 
 
 def test_add_new_order(global_config, orders_endpoint, user_token):
-  print("\n========== test_add_new_order\n")
+  print("\n\n========== test_add_new_order\n")
 
   print("global_config = \n" + json.dumps(global_config, indent=4))
   print("\n")
@@ -63,7 +64,7 @@ def test_add_new_order(global_config, orders_endpoint, user_token):
   print("\n")
   print(f"user_token = {user_token}")
 
-  print("\n======================================\n")
+  print("*****************************\n\n")
   
   response = requests.post(orders_endpoint, data=json.dumps(order_1),
       headers={'Authorization': user_token, 'Content-Type': 'application/json'}
@@ -77,3 +78,26 @@ def test_add_new_order(global_config, orders_endpoint, user_token):
   global_config['orderId'] = order_id
   global_config['orderTime'] = order_time
   assert order_info['status'] == "PLACED"
+  print("*****************************")
+
+
+def test_get_order(global_config, orders_endpoint, user_token):
+  print("\n\n=========== test_get_order")
+
+  print("preforming request.....\n Waiting for a response....\n")
+  response = requests.get(orders_endpoint + "/" + global_config['orderId'],
+      headers={'Authorization': user_token, 'Content-Type': 'application/json'}
+      )
+  
+  print("response = \n")
+  print("response.text = \n" + response.text)
+  
+
+  logger.debug(response.text)
+  order_info = json.loads(response.text)
+  assert order_info['orderId'] == global_config['orderId']
+  assert order_info['status'] == "PLACED"
+  assert order_info['totalAmount'] == 19.97
+  assert order_info['restaurantId'] == 1
+  assert len(order_info['orderItems']) == 2
+  print("*****************************\n\n")
