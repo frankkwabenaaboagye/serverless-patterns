@@ -168,6 +168,26 @@ Resources:
           Parameters:
               Location: api.yaml
 
+  ListUserAddressesFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/api/address
+      Handler: list_user_addresses.lambda_handler
+      Runtime: python3.9
+      Policies:
+        DynamoDBReadPolicy:
+          TableName: !Ref UserAddressesTable
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref UserAddressesTable
+
+  ListUserAddressesPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: "lambda:InvokeFunction"
+      FunctionName: !Ref ListUserAddressesFunction
+      Principal: "apigateway.amazonaws.com"
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ProfileApiGateway}/*/GET/address'
 
 Outputs:
   AddressBus:
