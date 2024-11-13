@@ -118,6 +118,55 @@ Resources:
               detail-type:
                 - address.deleted
 
+  ApiGatewayEventBridgeRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: !Join ["", ["/", !Ref "AWS::StackName", "/"]]
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: AllowApiGatewayServiceToAssumeRole
+            Effect: Allow
+            Action:
+              - 'sts:AssumeRole'
+            Principal:
+              Service:
+                - apigateway.amazonaws.com
+      Policies:
+        - PolicyName: EBPutEvents
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'events:PutEvents'
+                Resource:
+                  - !GetAtt AddressBus.Arn
+  
+  ProfileApiGateway:
+    Type: AWS::Serverless::Api
+    DependsOn:
+    - ApiGatewayEventBridgeRole
+
+    Properties:
+      StageName: !Ref Stage
+      Auth:
+        DefaultAuthorizer: MyCognitoAuthorizer
+        Authorizers:
+          MyCognitoAuthorizer:
+            UserPoolArn: !Sub arn:aws:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/${UserPool}
+      EndpointConfiguration:
+        Type: REGIONAL
+      TracingEnabled: true
+      MethodSettings:
+        - LoggingLevel: INFO
+          ResourcePath: '/*' # allows for logging on any resource
+          HttpMethod: '*' # allows for logging on any method
+      DefinitionBody:
+        Fn::Transform:
+          Name: AWS::Include
+          Parameters:
+              Location: api.yaml
 
 
 Outputs:
@@ -127,3 +176,6 @@ Outputs:
   AddressTable:
     Description: "DynamoDB User Address Table"
     Value: !Ref UserAddressesTable
+  ProfileApiEndpoint:
+    Description: "API Gateway endpoint URL"
+    Value: !Sub "https://${ProfileApiGateway}.execute-api.${AWS::Region}.amazonaws.com/${Stage}/"
