@@ -1,0 +1,27 @@
+==== M3
+curl -o module3_setup.sh 'https://ws-assets-prod-iad-r-iad-ed304a55c2ca1aee.s3.us-east-1.amazonaws.com/76bc5278-3f38-46e8-b306-f0bfda551f5a/module3/sam-python/module3_setup-2024-04-30.sh'
+
+curl -o ws-serverless-patterns.zip 'https://ws-assets-prod-iad-r-iad-ed304a55c2ca1aee.s3.us-east-1.amazonaws.com/76bc5278-3f38-46e8-b306-f0bfda551f5a/module3/sam-python/ws-serverless-patterns-2024-04-30.zip'
+
+
+export USERS_STACK_NAME=ws-serverless-patterns-users-WSS70A43TQYT
+export ORDERS_STACK_NAME=ws-serverless-patterns-orders
+
+aws cloudformation describe-stacks --stack-name $USERS_STACK_NAME --query "Stacks[0].Outputs"
+
+aws cloudformation describe-stacks --stack-name $ORDERS_STACK_NAME --query "Stacks[0].Outputs"
+
+Generate more metric data
+cmd="pytest tests/integration -v"; for i in $(seq 10); do $cmd; sleep 15; done
+
+==== M4
+
+
+export USERS_STACK_NAME=ws-serverless-patterns-users-WSS70A43TQYT
+export USERPROFILE_STACK_NAME=ws-serverless-patterns-userprofile
+
+aws cloudformation describe-stacks --stack-name $USERS_STACK_NAME --query "Stacks[0].Outputs"
+aws cloudformation describe-stacks --stack-name $USERPROFILE_STACK_NAME --query "Stacks[0].Outputs"
+
+Connect the API
+
